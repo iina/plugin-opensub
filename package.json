@@ -1,0 +1,56 @@
+{
+  "name": "iina-plugin-opensub",
+  "version": "0.9.0",
+  "description": "",
+  "main": "src/index.js",
+  "scripts": {
+    "serve-window": "parcel serve ui/window/index.html --dist-dir dist/ui/window",
+    "serve-sidebar": "parcel serve ui/sidebar/index.html --dist-dir dist/ui/sidebar",
+    "build": "rm -rf dist .parcel-cache && parcel build .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@parcel/transformer-sass": "^2.8.3",
+    "@parcel/transformer-vue": "^2.11.0",
+    "buffer": "^6.0.3",
+    "iina-plugin-definition": "^0.0.7",
+    "prettier": "^2.8.8",
+    "process": "^0.11.10"
+  },
+  "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^6.5.1",
+    "@fortawesome/free-solid-svg-icons": "^6.5.1",
+    "@fortawesome/vue-fontawesome": "^3.0.6",
+    "axios": "^1.6.7",
+    "parcel": "^2.8.3",
+    "parcel-optimizer-webview": "git+https://github.com/iina/parcel-optimizer-webview.git",
+    "vue": "^3.3.4"
+  },
+  "browserslist": "safari >= 9",
+  "entry": "src/index.js",
+  "targets": {
+    "main": false,
+    "window": {
+      "distDir": "./dist/ui/window",
+      "source": "ui/window/index.html",
+      "publicUrl": "./"
+    },
+    "sidebar": {
+      "distDir": "./dist/ui/sidebar",
+      "source": "ui/sidebar/index.html",
+      "publicUrl": "./"
+    },
+    "global": {
+      "distDir": "./dist/",
+      "source": "src/global.js",
+      "isLibrary": false
+    },
+    "entry": {
+      "distDir": "./dist/",
+      "source": "src/index.js",
+      "isLibrary": false
+    }
+  }
+}
