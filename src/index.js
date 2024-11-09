@@ -16,7 +16,8 @@ const {
 console.log("Plugin is running");
 
 const iinaVersion = parseInt(core.getVersion().build);
-const keychainAvailable = iinaVersion >= 140;
+const keychainAvailable =
+  iinaVersion >= 140 && preferences.get("save_login") === "keychain";
 
 standaloneWindow.loadFile("dist/ui/window/index.html");
 

@@ -1,13 +1,14 @@
 {
   "name": "OpenSubtitles",
   "identifier": "io.iina.opensub",
-  "version": "1.0.0",
-  "description": "Description here",
+  "version": "0.9.1",
+  "description": "Official OpenSubtitles plugin for IINA",
   "author": {
     "name": "IINA Developers",
-    "email": "developers@iina.io",
-    "url": "https://iina.io"
+    "url": "https://github.com/iina/plugin-opensub"
   },
+  "ghVersion": 4,
+  "ghRepo": "iina/plugin-opensub",
   "entry": "dist/index.js",
   "global": "dist/global.js",
   "permissions": ["show-osd", "file-system", "network-request"],
@@ -23,6 +24,7 @@
   ],
   "preferencesPage": "pref.html",
   "preferenceDefaults": {
-    "languages": ""
+    "languages": "",
+    "save_login": "keychain"
   }
 }
