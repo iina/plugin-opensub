@@ -77,6 +77,7 @@
         />
       </div>
       <div class="right">
+        <button @click="performSearch" style="margin-right: 4px">GO</button>
         <button @click="showOptions = !showOptions">...</button>
       </div>
     </div>
@@ -89,7 +90,6 @@
           <button @click="pasteFilename" style="margin-right: 4px">
             Paste filename
           </button>
-          <button @click="performSearch">Search</button>
         </div>
       </div>
       <div class="search-opt-item">
@@ -159,7 +159,10 @@
       <div v-if="isSearching" class="search-reuslts-alert">Loading...</div>
       <div v-else-if="searchResults === null"></div>
       <div v-else-if="searchResults.length === 0" class="search-reuslts-alert">
-        No result.
+        No result for query "<span class="query-text-in-no-result">{{
+          cachedSearch.query
+        }}</span
+        >".
       </div>
       <div v-else>
         <!-- search pagination -->
@@ -797,6 +800,11 @@ a {
   button {
     margin: 0 4px;
   }
+}
+
+.query-text-in-no-result {
+  color: var(--text-secondary);
+  font-size: 90%;
 }
 
 #search-results {
