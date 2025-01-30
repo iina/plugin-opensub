@@ -77,7 +77,13 @@
         />
       </div>
       <div class="right">
-        <button @click="performSearch" style="margin-right: 4px">GO</button>
+        <button
+          @click="performSearch"
+          style="margin-right: 4px"
+          :disabled="isSearching || !searchText"
+        >
+          GO
+        </button>
         <button @click="showOptions = !showOptions">...</button>
       </div>
     </div>
