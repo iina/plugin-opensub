@@ -7,15 +7,15 @@
             'header-item',
             'ui-clickable',
             'ui-hover',
-            { active: showUserPopup },
+            { active: userPopupShown },
           ]"
-          v-if="userInfo"
-          @click="showUserPopup = !showUserPopup"
+          v-if="userInfoAvailable"
+          @click="showUserPopup"
         >
           <FontAwesomeIcon :icon="['fas', 'user']" size="sm" />
           <span>{{ userInfo.username }}</span>
           <span v-if="userInfo.vip"> (VIP)</span>
-          <div class="popup-menu-container" v-if="showUserPopup">
+          <div class="popup-menu-container" v-if="userPopupShown">
             <div class="user-info">
               <span class="title">ID</span>: {{ userInfo.user_id }}<br />
               <span class="title">Level</span>: {{ userInfo.level }}<br />
@@ -33,6 +33,13 @@
             <hr />
             <div class="ui-clickable ui-hover" @click="logout">Log out</div>
           </div>
+        </div>
+        <div
+          v-else-if="userInfo?.username"
+          class="header-item ui-clickable ui-hover"
+          @click="showUserPopup"
+        >
+          {{ userInfo.username }}
         </div>
         <div v-else class="header-item ui-clickable ui-hover" @click="login">
           Log in
@@ -396,7 +403,7 @@ export default {
       cachedSearch: null,
       logs: [],
       // ui
-      showUserPopup: false,
+      userPopupShown: false,
       showLog: false,
       // options
       optType: "all",
@@ -414,33 +421,39 @@ export default {
     };
   },
   mounted() {
-    // login
-    setTimeout(async () => {
-      this.log(`Login status: ${client.loggedIn}`);
+    setTimeout(() => {
       if (client.loggedIn) {
-        const info = await client.getUserInfo();
-        this.userInfo = { ...info.data, username: client.username };
-        this.log(`Logged in as ${client.username}`);
+        this.userInfo = { username: client.username };
       }
-    }, 1000);
+      console.log("client logged in:", client.loggedIn);
+      console.log(this);
+    }, 500);
     // get languages
     (async () => {
       const lang = await rpc.$getLanguages();
       console.log("lang", lang);
       for (const l of lang.split(",")) {
-        console.log("l", l);
         this.subLang[l] = true;
       }
-      await this.refreshLanguageList();
     })();
     global.startSearch = async () => {
+      if (this.userInfo == null) {
+        await this.getUserInfo();
+      }
+      if (this.langMap == null) {
+        await this.refreshLanguageList();
+      }
       await this.pasteFilename();
       await this.performSearch();
     };
   },
   computed: {
+    userInfoAvailable() {
+      if (this.userInfo == null) return false;
+      return !!this.userInfo.user_id;
+    },
     userDetail() {
-      if (!this.userInfo) return "Not logged in";
+      if (!this.userInfoAvailable) return "Not logged in";
       const { allowed_downloads, allowed_translations, user_id } =
         this.userInfo;
       return `User ID: ${user_id}, Downloads: ${allowed_downloads}, Translations: ${allowed_translations}`;
@@ -492,15 +505,32 @@ export default {
       );
     },
     login() {
-      console.log("login");
+      if (client.loggedIn) {
+        this.getUserInfo();
+        return;
+      }
       this.showModal("login", "Login");
     },
     async logout() {
       this.log("Logging out");
       await client.logout();
       this.userInfo = null;
-      this.showUserPopup = false;
+      this.userPopupShown = false;
       this.log("Logged out");
+    },
+    async showUserPopup() {
+      if (!this.userInfoAvailable) {
+        await this.getUserInfo();
+      }
+      this.userPopupShown = !this.userPopupShown;
+    },
+    async getUserInfo() {
+      this.log(`Login status: ${client.loggedIn}`);
+      if (client.loggedIn) {
+        const info = await client.getUserInfo();
+        this.userInfo = { ...info.data, username: client.username };
+        this.log(`Logged in as ${client.username}`);
+      }
     },
     async refreshLanguageList() {
       try {
@@ -594,7 +624,6 @@ export default {
       this.refreshLanguageList();
     },
     searchBoxKeyPress(e) {
-      console.log("searchBoxKeyPress", e);
       if (e.key === "Enter") {
         this.performSearch();
       }

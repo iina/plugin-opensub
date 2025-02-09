@@ -167,9 +167,17 @@ export class Client {
   }
 
   async login(username, password) {
-    const res = await this.#req(() =>
-      this.api.user.login({ username, password }),
-    );
+    try {
+      const res = await this.#req(() =>
+        this.api.user.login({ username, password }),
+      );
+    } catch (error) {
+      if (error instanceof ResponseError && error.code === 429) {
+        console.log("Rate limited, try again after 1 second");
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        return this.login(username, password);
+      }
+    }
     console.log(res);
     // Save JWT globally. Don't care whether success or not, code in the plugin instance will handle it.
     const token = res.data.token;
