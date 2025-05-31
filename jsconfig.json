@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "types": [],
     "typeRoots": [
       "./node_modules/@types",
       "./node_modules/iina-plugin-definition"
