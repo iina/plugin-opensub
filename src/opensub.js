@@ -171,6 +171,18 @@ export class Client {
       const res = await this.#req(() =>
         this.api.user.login({ username, password }),
       );
+      console.log(res);
+      // Save JWT globally. Don't care whether success or not, code in the plugin instance will handle it.
+      const token = res.data.token;
+      const success = this.rpc.$setJWT(username, token);
+      this.#jwtToken = token;
+      this.username = username;
+      res.data.jwtSaved = success;
+      if (res.data.base_url) {
+        this.baseURL = res.data.base_url;
+        console.log("Base URL changed to", this.baseURL);
+      }
+      return res.data;
     } catch (error) {
       if (error instanceof ResponseError && error.code === 429) {
         console.log("Rate limited, try again after 1 second");
@@ -178,18 +190,6 @@ export class Client {
         return this.login(username, password);
       }
     }
-    console.log(res);
-    // Save JWT globally. Don't care whether success or not, code in the plugin instance will handle it.
-    const token = res.data.token;
-    const success = this.rpc.$setJWT(username, token);
-    this.#jwtToken = token;
-    this.username = username;
-    res.data.jwtSaved = success;
-    if (res.data.base_url) {
-      this.baseURL = res.data.base_url;
-      console.log("Base URL changed to", this.baseURL);
-    }
-    return res.data;
   }
 
   async logout() {

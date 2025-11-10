@@ -1,13 +1,13 @@
 {
   "name": "OpenSubtitles",
   "identifier": "io.iina.opensub",
-  "version": "0.9.4",
+  "version": "0.9.5",
   "description": "Official OpenSubtitles plugin for IINA",
   "author": {
     "name": "IINA Developers",
     "url": "https://github.com/iina/plugin-opensub"
   },
-  "ghVersion": 7,
+  "ghVersion": 8,
   "ghRepo": "iina/plugin-opensub",
   "entry": "dist/index.js",
   "global": "dist/global.js",
