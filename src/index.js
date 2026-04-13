@@ -128,7 +128,7 @@ function getCachedJWT() {
     return;
   }
   console.log(`getJWT: ${username}`);
-  const jwt = utils.keychainRead("opensubtitles", username);
+  const jwt = utils.keychainRead("opensubtitles", username) ?? null;
   console.log(`getJWT: token length: ${jwt?.length}`);
   return { jwt, username };
 }

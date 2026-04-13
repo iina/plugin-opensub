@@ -440,9 +440,6 @@ export default {
       if (this.userInfo == null) {
         await this.getUserInfo();
       }
-      if (this.langMap == null) {
-        await this.refreshLanguageList();
-      }
       await this.pasteFilename();
       await this.performSearch();
     };
@@ -533,6 +530,7 @@ export default {
       }
     },
     async refreshLanguageList() {
+      this.log("Getting language list...");
       try {
         this.langList = (await client.getLanguages()).data;
         this.langMap = this.langList.reduce((acc, l) => {
@@ -633,6 +631,9 @@ export default {
       this.searchText = fn;
     },
     async performSearch(page = null) {
+      if (this.langMap == null) {
+        await this.refreshLanguageList();
+      }
       this.isSearching = true;
       if (page == null) {
         this.log(`Searching for ${this.searchText}`);
