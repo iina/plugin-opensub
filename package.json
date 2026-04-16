@@ -32,11 +32,6 @@
   "entry": "src/index.js",
   "targets": {
     "main": false,
-    "window": {
-      "distDir": "./dist/ui/window",
-      "source": "ui/window/index.html",
-      "publicUrl": "./"
-    },
     "sidebar": {
       "distDir": "./dist/ui/sidebar",
       "source": "ui/sidebar/index.html",

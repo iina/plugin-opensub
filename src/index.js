@@ -19,22 +19,18 @@ const iinaVersion = parseInt(core.getVersion().build);
 const keychainAvailable =
   iinaVersion >= 140 && preferences.get("save_login") === "keychain";
 
-standaloneWindow.loadFile("dist/ui/window/index.html");
-
-menu.addItem(
-  menu.item("Show Window", () => {
-    standaloneWindow.open();
-  }),
-);
-menu.addItem(
-  menu.item(
-    "Show Sidebar",
-    () => {
-      sidebar.show();
-    },
-    { keyBinding: "Meta+p" },
-  ),
-);
+event.on("iina.menu-update", () => {
+  menu.removeAllItems()
+  menu.addItem(
+    menu.item(
+      "Show Sidebar",
+      () => {
+        sidebar.show();
+      },
+      { keyBinding: "Meta+p", enabled: core.window.visible },
+    ),
+  );
+});
 
 export const rpc = rpcClient(sidebar);
 global.rpc = rpc;
