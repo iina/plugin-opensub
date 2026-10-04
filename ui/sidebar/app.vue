@@ -85,7 +85,7 @@
       </div>
       <div class="right">
         <button
-          @click="performSearch"
+          @click="performSearch()"
           style="margin-right: 4px"
           :disabled="isSearching || !searchText"
         >
