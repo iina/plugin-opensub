@@ -593,16 +593,25 @@ export default {
         return;
       }
       rpc.$sendOSD("Downloading…");
-      const res = await client.download(fidList);
-      this.log(
-        `Downloaded ${item.attributes.release} (${fidList.length} files)`,
-      );
-      console.log("Download", res);
-      const { requests, remaining, message } = res;
-      this.quotaInfo = { requests, remaining, message };
-      this.userInfo.downloads_count = requests;
-      this.userInfo.remaining_downloads = remaining;
-      this.userInfo.reset_time = message;
+      try {
+        const res = await client.download(fidList);
+        this.log(
+          `Downloaded ${item.attributes.release} (${fidList.length} files)`,
+        );
+        rpc.$sendOSD("Subtitles downloaded");
+        console.log("Download", res);
+        const { requests, remaining, message } = res;
+        this.quotaInfo = { requests, remaining, message };
+        if (this.userInfo) {
+          this.userInfo.downloads_count = requests;
+          this.userInfo.remaining_downloads = remaining;
+          this.userInfo.reset_time = message;
+        }
+      } catch (err) {
+        const message = err.message || String(err);
+        this.log(`Download failed: ${message}`, "error");
+        rpc.$sendOSD(`Download failed: ${message}`);
+      }
     },
     showModal(type, title) {
       this.modalType = type;
