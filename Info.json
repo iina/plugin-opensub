@@ -25,6 +25,7 @@
   "preferencesPage": "pref.html",
   "preferenceDefaults": {
     "languages": "",
-    "save_login": "keychain"
+    "save_login": "keychain",
+    "personal_api_key_enabled": false
   }
 }

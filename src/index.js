@@ -20,7 +20,34 @@ const keychainAvailable =
   iinaVersion >= 140 && preferences.get("save_login") === "keychain";
 
 event.on("iina.menu-update", () => {
-  menu.removeAllItems()
+  menu.removeAllItems();
+  menu.addItem(
+    menu.item(
+      "Personal API Key…",
+      () => {
+        const enteredKey = utils.prompt(
+          "Enter your OpenSubtitles API key. It will be saved in the system keychain. Leave blank to use IINA's shared key.",
+        );
+        if (enteredKey === null) return;
+        const key = enteredKey.trim();
+        if (key && !utils.keychainWrite("opensubtitles-api", "personal", key)) {
+          core.osd("Could not save the API key in the system keychain.");
+          return;
+        }
+        preferences.set("personal_api_key_enabled", !!key);
+        // Sessions obtained with the previous API key must not be reused.
+        preferences.set("username", "");
+        preferences.sync();
+        sidebar.postMessage("api-config-changed", {});
+        core.osd(
+          key
+            ? "Personal OpenSubtitles API key enabled."
+            : "IINA's shared OpenSubtitles API key enabled.",
+        );
+      },
+      { enabled: iinaVersion >= 140 && core.window.visible },
+    ),
+  );
   menu.addItem(
     menu.item(
       "Show Sidebar",
@@ -44,6 +71,16 @@ event.on("iina.window-loaded", () => {
 
   rpc.$getJWT = () => {
     return getCachedJWT();
+  };
+
+  rpc.$getAPIConfig = () => {
+    const personalAPIKeyEnabled = !!preferences.get("personal_api_key_enabled");
+    if (!personalAPIKeyEnabled) return { personalAPIKeyEnabled: false };
+    const apiKey = utils.keychainRead("opensubtitles-api", "personal");
+    return {
+      personalAPIKeyEnabled,
+      apiKey: typeof apiKey === "string" && apiKey.length ? apiKey : null,
+    };
   };
 
   rpc.$getFileName = () => {
@@ -89,7 +126,7 @@ event.on("iina.window-loaded", () => {
 
   rpc.$downloadFile = async (items) => {
     for (const { link, file_name } of items) {
-      console.log(`downloadFile: ${link}, ${file_name}`);
+      console.log(`downloadFile: ${file_name}`);
       const dest = `@tmp/${file_name}`;
       await http.download(link, dest);
       core.subtitle.loadTrack(utils.resolvePath(dest));

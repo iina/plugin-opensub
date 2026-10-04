@@ -11,7 +11,7 @@ export function rpcClient(iinaModule) {
         }
         target[name] = value;
         iinaModule.onMessage(`#call.${name}`, async ({ args }) => {
-          console.log(`RPC call: ${name}, args: ${args}`);
+          console.log(`RPC call: ${name}`);
           let res = value.apply(this, args);
           if (res instanceof Promise) {
             res = await res;
@@ -28,11 +28,11 @@ export function rpcClient(iinaModule) {
         return (...args) => {
           return new Promise((resolve) => {
             iinaModule.onMessage(`#on.${name}`, ({ res }) => {
-              console.log(`RPC got response: ${name}, ${res}`);
+              console.log(`RPC got response: ${name}`);
               iinaModule.onMessage(`#on.${name}`, null);
               resolve(res);
             });
-            console.log(`RPC call: ${name}, args: ${args}`);
+            console.log(`RPC call: ${name}`);
             iinaModule.postMessage(`#call.${name}`, { args });
           });
         };

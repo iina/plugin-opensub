@@ -29,6 +29,8 @@ document.addEventListener("DOMContentLoaded", () => {
 export const client = new Client();
 export const rpc = rpcClient(iina);
 
+iina.onMessage("api-config-changed", () => window.location.reload());
+
 rpc.$requestDownload = () => {
   // global.needSearch = true;
   global.startSearch();
