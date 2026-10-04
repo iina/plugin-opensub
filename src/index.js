@@ -51,6 +51,11 @@ event.on("iina.window-loaded", () => {
   };
 
   rpc.$setJWT = (username, token) => {
+    if (token === null) {
+      preferences.set("username", "");
+      preferences.sync();
+      return true;
+    }
     if (!keychainAvailable) {
       console.log("setJWT: keychain not available");
       return;

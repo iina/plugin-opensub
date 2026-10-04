@@ -7,7 +7,7 @@
     "serve-window": "parcel serve ui/window/index.html --dist-dir dist/ui/window",
     "serve-sidebar": "parcel serve ui/sidebar/index.html --dist-dir dist/ui/sidebar",
     "build": "rm -rf dist .parcel-cache && parcel build .",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --test"
   },
   "author": "",
   "license": "ISC",

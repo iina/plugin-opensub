@@ -78,7 +78,11 @@ export class API {
           const status = error.response.status;
           if (status === 401) {
             const message =
-              error.response.data.message || "Invalid credentials";
+              error.response.data?.message ||
+              error.response.data?.errors?.join(". ") ||
+              (path === "/login"
+                ? "Invalid username or password."
+                : "OpenSubtitles rejected this session. Please sign in again.");
             throw new ResponseError(status, message);
           } else {
             throw new ResponseError(
@@ -134,6 +138,7 @@ export class Client {
   baseURL = "api.opensubtitles.com";
   username = null;
   #jwtToken = null;
+  #sessionReady = null;
 
   constructor(options = {}) {
     if (options.api_key) {
@@ -147,15 +152,25 @@ export class Client {
 
     console.log("Client created");
 
-    this.rpc.$getJWT().then(({ jwt, username }) => {
-      console.log("Received JWT", jwt, username);
-      if (typeof jwt === "string" && jwt.length > 0) {
-        this.#jwtToken = jwt;
-        this.username = username;
-      } else {
+    this.#sessionReady = this.rpc.$getJWT()
+      .then((cached) => {
+        const { jwt, username } = cached ?? {};
+        console.log("Received JWT", jwt, username);
+        if (typeof jwt === "string" && jwt.length > 0) {
+          this.#jwtToken = jwt;
+          this.username = username;
+        } else {
+          this.#jwtToken = null;
+        }
+      })
+      .catch(() => {
         this.#jwtToken = null;
-      }
-    });
+        this.username = null;
+      });
+  }
+
+  get ready() {
+    return this.#sessionReady;
   }
 
   get endpoint() {
@@ -167,44 +182,69 @@ export class Client {
   }
 
   async login(username, password) {
+    await this.ready;
+    let res;
     try {
-      const res = await this.#req(() =>
+      res = await this.#req(() =>
         this.api.user.login({ username, password }),
       );
-      console.log(res);
-      // Save JWT globally. Don't care whether success or not, code in the plugin instance will handle it.
-      const token = res.data.token;
-      const success = this.rpc.$setJWT(username, token);
-      this.#jwtToken = token;
-      this.username = username;
-      res.data.jwtSaved = success;
-      if (res.data.base_url) {
-        this.baseURL = res.data.base_url;
-        console.log("Base URL changed to", this.baseURL);
-      }
-      return res.data;
     } catch (error) {
       if (error instanceof ResponseError && error.code === 429) {
         console.log("Rate limited, try again after 1 second");
         await new Promise((resolve) => setTimeout(resolve, 1000));
         return this.login(username, password);
       }
+      throw error;
     }
+    const token = res.data.token;
+    if (typeof token !== "string" || token.length === 0) {
+      await this.#clearSession();
+      throw new RequestError(
+        "OpenSubtitles did not return a session token. Please try again later.",
+      );
+    }
+    if (res.data.base_url) {
+      this.baseURL = res.data.base_url;
+      this.api.endpoint = this.endpoint;
+    }
+    // A successful login response does not guarantee that its token is usable.
+    try {
+      await this.api.infos.user({}, token);
+    } catch (error) {
+      if (error instanceof ResponseError && error.code === 401) {
+        await this.#clearSession();
+        throw new ResponseError(
+          401,
+          "OpenSubtitles returned a session token but rejected it. Sign-in could not be completed. Please try again later.",
+        );
+      }
+      throw error;
+    }
+    const success = await this.rpc.$setJWT(username, token);
+    this.#jwtToken = token;
+    this.username = username;
+    res.data.jwtSaved = success;
+    return res.data;
   }
 
   async logout() {
-    const res = await this.#req(() => this.api.user.logout({}, this.#jwtToken));
-    this.#jwtToken = null;
-    const success = this.rpc.$setJWT(this.username, null);
-    return res;
+    await this.ready;
+    try {
+      if (this.loggedIn) {
+        return await this.#req(() => this.api.user.logout({}, this.#jwtToken));
+      }
+    } finally {
+      await this.#clearSession();
+    }
   }
 
   async getUserInfo() {
+    await this.ready;
     if (!this.loggedIn) {
       throw new Error("Not logged in");
     }
     const res = await this.#req(() =>
-      this.api.infos.user(null, this.#jwtToken),
+      this.api.infos.user({}, this.#jwtToken),
     );
     return res.data;
   }
@@ -220,6 +260,9 @@ export class Client {
   }
 
   async download(idList) {
+    await this.ready;
+    // Invalid tokens can make downloads silently use the anonymous quota.
+    if (this.loggedIn) await this.getUserInfo();
     const resData = await Promise.all(
       idList.map(async (id) => {
         const res = await this.#req(() =>
@@ -241,13 +284,21 @@ export class Client {
     return lastRes;
   }
 
+  async #clearSession() {
+    const username = this.username;
+    this.#jwtToken = null;
+    this.username = null;
+    await this.rpc.$setJWT(username, null);
+  }
+
   async #req(fn) {
+    await this.ready;
     try {
       return await fn();
     } catch (error) {
       if (error instanceof ResponseError && error.code === 401) {
         console.log("Invalid JWT token, clearing it");
-        this.#jwtToken = null;
+        await this.#clearSession();
       }
       throw error;
     }

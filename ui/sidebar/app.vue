@@ -421,13 +421,7 @@ export default {
     };
   },
   mounted() {
-    setTimeout(() => {
-      if (client.loggedIn) {
-        this.userInfo = { username: client.username };
-      }
-      console.log("client logged in:", client.loggedIn);
-      console.log(this);
-    }, 500);
+    this.getUserInfo();
     // get languages
     (async () => {
       const lang = await rpc.$getLanguages();
@@ -501,19 +495,23 @@ export default {
         p(time.getSeconds())
       );
     },
-    login() {
+    async login() {
+      await client.ready;
       if (client.loggedIn) {
-        this.getUserInfo();
+        await this.getUserInfo();
         return;
       }
       this.showModal("login", "Login");
     },
     async logout() {
       this.log("Logging out");
-      await client.logout();
-      this.userInfo = null;
-      this.userPopupShown = false;
-      this.log("Logged out");
+      try {
+        await client.logout();
+      } finally {
+        this.userInfo = null;
+        this.userPopupShown = false;
+        this.log("Logged out");
+      }
     },
     async showUserPopup() {
       if (!this.userInfoAvailable) {
@@ -522,11 +520,21 @@ export default {
       this.userPopupShown = !this.userPopupShown;
     },
     async getUserInfo() {
+      await client.ready;
       this.log(`Login status: ${client.loggedIn}`);
-      if (client.loggedIn) {
+      if (!client.loggedIn) return;
+      try {
         const info = await client.getUserInfo();
         this.userInfo = { ...info.data, username: client.username };
         this.log(`Logged in as ${client.username}`);
+      } catch (err) {
+        this.log(`Session error: ${err}`, "error");
+        if (err.code === 401) {
+          this.userInfo = null;
+          this.userPopupShown = false;
+          this.loginError = err.message;
+          this.showModal("login", "Login");
+        }
       }
     },
     async refreshLanguageList() {
@@ -559,6 +567,7 @@ export default {
       return name;
     },
     async performLogin() {
+      this.loginError = "";
       this.loggingIn = true;
       try {
         const resData = await client.login(
