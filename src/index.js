@@ -89,7 +89,7 @@ event.on("iina.window-loaded", () => {
 
   rpc.$downloadFile = async (items) => {
     for (const { link, file_name } of items) {
-      console.log(`downloadFile: ${link}, ${file_name}`);
+      console.log(`downloadFile: ${file_name}`);
       const dest = `@tmp/${file_name}`;
       await http.download(link, dest);
       core.subtitle.loadTrack(utils.resolvePath(dest));

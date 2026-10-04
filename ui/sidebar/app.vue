@@ -426,7 +426,6 @@ export default {
         this.userInfo = { username: client.username };
       }
       console.log("client logged in:", client.loggedIn);
-      console.log(this);
     }, 500);
     // get languages
     (async () => {
@@ -565,7 +564,7 @@ export default {
           this.loginUsername,
           this.loginPassword,
         );
-        console.log(resData);
+        console.log("Login request succeeded");
         const { user } = resData;
         this.userInfo = { ...user, username: this.loginUsername };
         this.loginPassword = "";
@@ -597,7 +596,6 @@ export default {
       this.log(
         `Downloaded ${item.attributes.release} (${fidList.length} files)`,
       );
-      console.log("Download", res);
       const { requests, remaining, message } = res;
       this.quotaInfo = { requests, remaining, message };
       this.userInfo.downloads_count = requests;

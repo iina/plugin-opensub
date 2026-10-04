@@ -51,7 +51,7 @@ export class API {
         def,
         reqParams,
       );
-      console.log(method, path, body, headers);
+      console.log(method, path);
       if (jwt && def.opts?.auth) {
         console.log("Using JWT for request");
         headers.Authorization = `Bearer ${jwt}`;
@@ -72,9 +72,12 @@ export class API {
         if (error.response) {
           // The request was made and the server responded with a status code
           // that falls out of the range of 2xx
-          console.log(`Error requesting ${def.url}`, error.response);
-          iina.postMessage("error", `Error requesting ${def.url}`);
-          iina.postMessage("error", error.response);
+          // Axios response/request objects include credential-bearing config.
+          console.log(`Error requesting ${path}: ${error.response.status}`);
+          iina.postMessage(
+            "error",
+            `Error requesting ${path}: ${error.response.status}`,
+          );
           const status = error.response.status;
           if (status === 401) {
             const message =
@@ -94,12 +97,10 @@ export class API {
             "error",
             `Error requesting ${def.url}: no response received`,
           );
-          iina.postMessage("error", error.request);
           throw new RequestError("No response received");
         } else {
           // Something happened in setting up the request that triggered an Error
           iina.postMessage("error", `Error setting up ${def.url}`);
-          iina.postMessage("error", error.message);
           throw new RequestError(error.message);
         }
       }
@@ -148,7 +149,7 @@ export class Client {
     console.log("Client created");
 
     this.rpc.$getJWT().then(({ jwt, username }) => {
-      console.log("Received JWT", jwt, username);
+      console.log("Received saved session");
       if (typeof jwt === "string" && jwt.length > 0) {
         this.#jwtToken = jwt;
         this.username = username;
@@ -171,7 +172,7 @@ export class Client {
       const res = await this.#req(() =>
         this.api.user.login({ username, password }),
       );
-      console.log(res);
+      console.log("Login request succeeded");
       // Save JWT globally. Don't care whether success or not, code in the plugin instance will handle it.
       const token = res.data.token;
       const success = this.rpc.$setJWT(username, token);
@@ -225,7 +226,6 @@ export class Client {
         const res = await this.#req(() =>
           this.api.download({ file_id: id }, this.#jwtToken),
         );
-        console.log(res.data);
         return res.data;
       }),
     );
